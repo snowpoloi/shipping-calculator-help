@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Postal Codes{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>Upload Postal Codes</h1>
+        <form action="{{ url_for('main_bp.upload_postal_codes') }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Choose CSV File</label>
+                <input type="file" class="form-control-file" id="file" name="file">
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </div>
+{% endblock %}

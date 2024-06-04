@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Add/Edit Company{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">{{ 'Edit Company' if company else 'Add New Company' }}</h1>
+
+<form action="{{ url_for('company_bp.add_company' if not company else 'company_bp.update_company', company_id=company.id if company else None) }}" method="post">
+    <div class="form-group">
+        <label for="name">Company Name:</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ company.name if company else '' }}" required>
+    </div>
+    <div class="form-group">
+        <label for="category">Category:</label>
+        <select class="form-control" id="category" name="category" required>
+            <option value="courier" {% if company and company.category == 'courier' %}selected{% endif %}>Courier</option>
+            <option value="transport" {% if company and company.category == 'transport' %}selected{% endif %}>Transport</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="max_length">Max Length (cm):</label>
+        <input type="number" step="0.01" class="form-control" id="max_length" name="max_length" value="{{ company.max_length if company else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="max_width">Max Width (cm):</label>
+        <input type="number" step="0.01" class="form-control" id="max_width" name="max_width" value="{{ company.max_width if company else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="max_height">Max Height (cm):</label>
+        <input type="number" step="0.01" class="form-control" id="max_height" name="max_height" value="{{ company.max_height if company else '' }}">
+    </div>
+    <div class="form-group">
+        <label for="max_weight">Max Weight (kg):</label>
+        <input type="number" step="0.01" class="form-control" id="max_weight" name="max_weight" value="{{ company.max_weight if company else '' }}">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">{{ 'Update' if company else 'Add' }}</button>
+</form>
+{% endblock %}

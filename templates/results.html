@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">Shipping Results</h1>
+{% for result in results %}
+    {% if result.error %}
+        <div class="alert alert-danger">{{ result.error }}</div>
+    {% else %}
+        <div class="result-item">
+            <h5>Company: {{ result.company }}</h5>
+            <p>Cost: {{ result.cost }}</p>
+        </div>
+    {% endif %}
+{% endfor %}
+{% endblock %}

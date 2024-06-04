@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Shipping Calculator{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">Shipping Calculator</h1>
+<form action="{{ url_for('main_bp.calculate') }}" method="post" onsubmit="return validateForm()">
+    <div class="form-group">
+        <label for="num_packages">Number of Packages:</label>
+        <input type="number" class="form-control" id="num_packages" name="num_packages" value="1" onchange="toggleVolumeFields()">
+    </div>
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="has_total_volume" name="has_total_volume" onchange="toggleVolumeFields()">
+        <label class="form-check-label" for="has_total_volume">Do you have the total volume of the packages?</label>
+    </div>
+    <div id="volume-fields" class="form-group" style="display:none;">
+        <label for="volume">Total Volume (m³):</label>
+        <input type="number" step="0.001" class="form-control" id="volume" name="volume">
+    </div>
+    <div id="package-fields">
+        <div id="package-details" class="package-details"></div>
+    </div>
+    <div class="form-group">
+        <label for="weight">Total Weight (kg):</label>
+        <input type="number" class="form-control" id="weight" name="weight" required>
+    </div>
+    <div class="form-group">
+        <label for="postal_code">Postal Code:</label>
+        <input type="text" class="form-control" id="postal_code" name="postal_code" onkeyup="searchPostalCodes()" required>
+        <div id="postal_code_results" class="list-group"></div>
+    </div>
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="include_cubic_rate" name="include_cubic_rate">
+        <label class="form-check-label" for="include_cubic_rate">Include Cubic Rate in Calculation</label>
+    </div>
+    <div class="form-group">
+        <label for="companies">Select Companies:</label>
+        <select class="form-control" id="companies" name="companies" multiple>
+            {% for company in companies %}
+                <option value="{{ company.id }}" selected>{{ company.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Calculate</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleVolumeFields();
+    });
+
+    function toggleVolumeFields() {
+        const numPackages = document.getElementById('num_packages').value;
+        const hasTotalVolume = document.getElementById('has_total_volume').checked;
+
+        document.getElementById('volume-fields').style.display = hasTotalVolume ? 'block' : 'none';
+        document.getElementById('package-fields').style.display = hasTotalVolume ? 'none' : 'block';
+        document.getElementById('include_cubic_rate').checked = hasTotalVolume;
+
+        const packageDetails = document.getElementById('package-details');
+        packageDetails.innerHTML = '';
+
+        for (let i = 0; i < numPackages; i++) {
+            packageDetails.innerHTML += `
+                <div class="package-detail border p-3 mb-3">
+                    <h5>Package ${i + 1}</h5>
+                    <div class="form-group">
+                        <label for="input_type_${i}">Input Type:</label>
+                        <select class="form-control" id="input_type_${i}" name="input_type_${i}" onchange="toggleInputType(${i})">
+                            <option value="dimensions">Dimensions</option>
+                            <option value="volume">Volume</option>
+                        </select>
+                    </div>
+                    <div id="dimensions_${i}">
+                        <div class="form-group">
+                            <label for="length_${i}">Length (cm):</label>
+                            <input type="number" class="form-control" id="length_${i}" name="length_${i}">
+                        </div>
+                        <div class="form-group">
+                            <label for="width_${i}">Width (cm):</label>
+                            <input type="number" class="form-control" id="width_${i}" name="width_${i}">
+                        </div>
+                        <div class="form-group">
+                            <label for="height_${i}">Height (cm):</label>
+                            <input type="number" class="form-control" id="height_${i}" name="height_${i}">
+                        </div>
+                    </div>
+                    <div id="volume_${i}" style="display:none;">
+                        <div class="form-group">
+                            <label for="volume_${i}">Volume (m³):</label>
+                            <input type="number" step="0.001" class="form-control" id="volume_${i}" name="volume_${i}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="weight_${i}">Weight (kg):</label>
+                        <input type="number" class="form-control" id="weight_${i}" name="weight_${i}">
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function toggleInputType(index) {
+        const inputType = document.getElementById(`input_type_${index}`).value;
+        document.getElementById(`dimensions_${index}`).style.display = inputType === 'dimensions' ? 'block' : 'none';
+        document.getElementById(`volume_${index}`).style.display = inputType === 'volume' ? 'block' : 'none';
+    }
+
+    async function searchPostalCodes() {
+        const query = document.getElementById('postal_code').value;
+        const response = await fetch(`/search_postal_codes?query=${query}`);
+        const results = await response.json();
+        const resultsContainer = document.getElementById('postal_code_results');
+        resultsContainer.innerHTML = '';
+        results.forEach(result => {
+            const item = document.createElement('a');
+            item.classList.add('list-group-item', 'list-group-item-action');
+            item.textContent = `${result.postal_code} - ${result.area_name}, ${result.prefecture}`;
+            item.onclick = () => {
+                document.getElementById('postal_code').value = result.postal_code;
+                resultsContainer.innerHTML = '';
+            };
+            resultsContainer.appendChild(item);
+        });
+    }
+
+    function validateForm() {
+        const weight = document.getElementById('weight').value;
+        if (!weight) {
+            alert('Total weight is required');
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

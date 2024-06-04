@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Postal Codes{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Manage Postal Codes</h1>
+    <a href="{{ url_for('main_bp.add_postal_code') }}" class="btn btn-primary mb-3">Add New Postal Code</a>
+    <a href="{{ url_for('main_bp.upload_postal_codes') }}" class="btn btn-primary mb-3">Upload Postal Codes</a>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Postal Code</th>
+                <th>Area Name</th>
+                <th>Prefecture</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for postal_code in postal_codes %}
+            <tr>
+                <td>{{ postal_code.postal_code }}</td>
+                <td>{{ postal_code.area_name }}</td>
+                <td>{{ postal_code.prefecture }}</td>
+                <td>
+                    <a href="{{ url_for('main_bp.edit_postal_code', id=postal_code.id) }}" class="btn btn-warning">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

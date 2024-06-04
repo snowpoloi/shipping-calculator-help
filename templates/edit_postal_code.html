@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Postal Code{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Edit Postal Code</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="postal_code">Postal Code</label>
+            <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ postal_code.postal_code }}" required>
+        </div>
+        <div class="form-group">
+            <label for="area_name">Area Name</label>
+            <input type="text" class="form-control" id="area_name" name="area_name" value="{{ postal_code.area_name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="prefecture">Prefecture</label>
+            <input type="text" class="form-control" id="prefecture" name="prefecture" value="{{ postal_code.prefecture }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

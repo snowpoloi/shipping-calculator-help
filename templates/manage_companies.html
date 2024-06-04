@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Companies{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">Manage Companies</h1>
+
+<a href="{{ url_for('company_bp.add_company') }}" class="btn btn-primary mb-4">Add New Company</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Max Length (cm)</th>
+            <th>Max Width (cm)</th>
+            <th>Max Height (cm)</th>
+            <th>Max Weight (kg)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for company in companies %}
+        <tr>
+            <td>{{ company.name }}</td>
+            <td>{{ company.category }}</td>
+            <td>{{ company.max_length }}</td>
+            <td>{{ company.max_width }}</td>
+            <td>{{ company.max_height }}</td>
+            <td>{{ company.max_weight }}</td>
+            <td>
+                <a href="{{ url_for('company_bp.edit_company', company_id=company.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                <form action="{{ url_for('company_bp.delete_company', company_id=company.id) }}" method="post" style="display:inline-block;">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

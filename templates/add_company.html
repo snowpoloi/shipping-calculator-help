@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Company{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">Add New Company</h1>
+
+<form action="{{ url_for('company_bp.add_company') }}" method="post">
+    <div class="form-group">
+        <label for="name">Company Name:</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    <div class="form-group">
+        <label for="category">Category:</label>
+        <select class="form-control" id="category" name="category" required>
+            <option value="courier">Courier</option>
+            <option value="transport">Transport</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="max_length">Max Length (cm):</label>
+        <input type="number" step="0.01" class="form-control" id="max_length" name="max_length">
+    </div>
+    <div class="form-group">
+        <label for="max_width">Max Width (cm):</label>
+        <input type="number" step="0.01" class="form-control" id="max_width" name="max_width">
+    </div>
+    <div class="form-group">
+        <label for="max_height">Max Height (cm):</label>
+        <input type="number" step="0.01" class="form-control" id="max_height" name="max_height">
+    </div>
+    <div class="form-group">
+        <label for="max_weight">Max Regular Weight (kg):</label>
+        <input type="number" step="0.01" class="form-control" id="max_weight" name="max_weight">
+    </div>
+    <div class="form-group">
+        <label for="max_volumetric_weight">Max Volumetric Weight (kg):</label>
+        <input type="number" step="0.01" class="form-control" id="max_volumetric_weight" name="max_volumetric_weight">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Add Company</button>
+</form>
+{% endblock %}

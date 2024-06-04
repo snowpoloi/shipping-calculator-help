@@ -1,0 +1,6 @@
+flask
+gunicorn
+pandas
+flask_sqlalchemy
+flask_migrate
+mysqlclient

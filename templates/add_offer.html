@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Add Offer{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-4">Add Offer</h1>
+<form action="{{ url_for('offer_bp.add_offer') }}" method="post">
+    <div class="form-group">
+        <label for="company_id">Company:</label>
+        <select class="form-control" id="company_id" name="company_id" required>
+            {% for company in companies %}
+                <option value="{{ company.id }}">{{ company.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="offer_type">Offer Type:</label>
+        <select class="form-control" id="offer_type" name="offer_type" required>
+            <option value="weight">Weight-Based</option>
+            <option value="volume">Volume-Based</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="min_weight">Min Weight (kg):</label>
+        <input type="number" step="0.01" class="form-control" id="min_weight" name="min_weight">
+    </div>
+    <div class="form-group">
+        <label for="max_weight">Max Weight (kg):</label>
+        <input type="number" step="0.01" class="form-control" id="max_weight" name="max_weight">
+    </div>
+    <div class="form-group">
+        <label for="base_cost">Base Cost:</label>
+        <input type="number" step="0.01" class="form-control" id="base_cost" name="base_cost">
+    </div>
+    <div class="form-group">
+        <label for="extra_cost_per_kg">Extra Cost per kg:</label>
+        <input type="number" step="0.01" class="form-control" id="extra_cost_per_kg" name="extra_cost_per_kg">
+    </div>
+    <div class="form-group">
+        <label for="cubic_rate">Cubic Rate:</label>
+        <input type="number" step="0.01" class="form-control" id="cubic_rate" name="cubic_rate">
+    </div>
+    <div class="form-group">
+        <label for="min_charge">Min Charge:</label>
+        <input type="number" step="0.01" class="form-control" id="min_charge" name="min_charge">
+    </div>
+    
+    <input type="hidden" name="selected_postal_codes" id="hidden_postal_codes">
+    <div class="form-group">
+        <label for="postal_codes">Postal Codes:</label>
+        <input type="text" class="form-control" id="postal_code_search" placeholder="Search for Postal Codes...">
+        <button type="button" class="btn btn-secondary mt-2" id="select_all_postal_codes">Select All</button>
+        <div id="postal_code_list" class="mt-2"></div>
+        <div id="selected_postal_codes" class="mt-2">
+            <h5>Selected Postal Codes</h5>
+            <button type="button" class="btn btn-danger" id="clear_selected_postal_codes">Clear All</button>
+            <ul id="selected_postal_codes_list"></ul>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block">Add Offer</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const allPostalCodes = {{ postal_codes|tojson }};
+    const postalCodeSearch = document.getElementById('postal_code_search');
+    const postalCodeList = document.getElementById('postal_code_list');
+    const selectedPostalCodesList = document.getElementById('selected_postal_codes_list');
+    const selectAllButton = document.getElementById('select_all_postal_codes');
+    const clearAllButton = document.getElementById('clear_selected_postal_codes');
+    const hiddenPostalCodes = document.getElementById('hidden_postal_codes');
+    let selectedPostalCodes = [];
+
+    postalCodeSearch.addEventListener('input', function() {
+        const searchTerm = postalCodeSearch.value.toLowerCase();
+        postalCodeList.innerHTML = '';
+        const filteredPostalCodes = allPostalCodes.filter(pc => !selectedPostalCodes.includes(pc) && (pc.area_name.toLowerCase().includes(searchTerm) || pc.prefecture.toLowerCase().includes(searchTerm) || pc.postal_code.includes(searchTerm)));
+        filteredPostalCodes.forEach(pc => {
+            const listItem = document.createElement('div');
+            listItem.innerHTML = `<input type="checkbox" value="${pc.id}"> ${pc.postal_code} - ${pc.area_name}, ${pc.prefecture}`;
+            postalCodeList.appendChild(listItem);
+        });
+    });
+
+    postalCodeList.addEventListener('change', function(event) {
+        const checkbox = event.target;
+        if (checkbox.checked) {
+            const postalCodeId = checkbox.value;
+            const postalCode = allPostalCodes.find(pc => pc.id == postalCodeId);
+            selectedPostalCodes.push(postalCode);
+            updateSelectedPostalCodes();
+            updatePostalCodeList();
+        }
+    });
+
+    selectAllButton.addEventListener('click', function() {
+        const checkboxes = postalCodeList.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            if (!checkbox.checked) {
+                checkbox.checked = true;
+                const postalCodeId = checkbox.value;
+                const postalCode = allPostalCodes.find(pc => pc.id == postalCodeId);
+                selectedPostalCodes.push(postalCode);
+            }
+        });
+        updateSelectedPostalCodes();
+        updatePostalCodeList();
+    });
+
+    clearAllButton.addEventListener('click', function() {
+        selectedPostalCodes = [];
+        updateSelectedPostalCodes();
+        postalCodeList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+        updatePostalCodeList();
+    });
+
+    function updateSelectedPostalCodes() {
+        selectedPostalCodesList.innerHTML = '';
+        selectedPostalCodes.forEach(pc => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `${pc.postal_code} - ${pc.area_name}, ${pc.prefecture} <button type="button" class="btn btn-sm btn-danger" data-id="${pc.id}">Remove</button>`;
+            selectedPostalCodesList.appendChild(listItem);
+        });
+        hiddenPostalCodes.value = selectedPostalCodes.map(pc => pc.id).join(',');
+    }
+
+    selectedPostalCodesList.addEventListener('click', function(event) {
+        if (event.target.tagName === 'BUTTON') {
+            const postalCodeId = event.target.dataset.id;
+            selectedPostalCodes = selectedPostalCodes.filter(pc => pc.id != postalCodeId);
+            updateSelectedPostalCodes();
+            postalCodeList.querySelector(`input[value="${postalCodeId}"]`).checked = false;
+            updatePostalCodeList();
+        }
+    });
+
+    function updatePostalCodeList() {
+        const searchTerm = postalCodeSearch.value.toLowerCase();
+        postalCodeList.innerHTML = '';
+        const filteredPostalCodes = allPostalCodes.filter(pc => !selectedPostalCodes.includes(pc) && (pc.area_name.toLowerCase().includes(searchTerm) || pc.prefecture.toLowerCase().includes(searchTerm) || pc.postal_code.includes(searchTerm)));
+        filteredPostalCodes.forEach(pc => {
+            const listItem = document.createElement('div');
+            listItem.innerHTML = `<input type="checkbox" value="${pc.id}"> ${pc.postal_code} - ${pc.area_name}, ${pc.prefecture}`;
+            postalCodeList.appendChild(listItem);
+        });
+    }
+});
+</script>
+{% endblock %}

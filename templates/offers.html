@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Offers{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Manage Offers</h1>
+    <a href="{{ url_for('offer_bp.add_offer') }}" class="btn btn-primary mb-4">Add New Offer</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Company</th>
+                <th scope="col">Min Weight</th>
+                <th scope="col">Max Weight</th>
+                <th scope="col">Base Cost</th>
+                <th scope="col">Extra Cost per Kg</th>
+                <th scope="col">Cubic Rate</th>
+                <th scope="col">Min Charge</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for offer in offers %}
+            <tr>
+                <td>{{ offer.company.name }}</td>
+                <td>{{ offer.min_weight }}</td>
+                <td>{{ offer.max_weight }}</td>
+                <td>{{ offer.base_cost }}</td>
+                <td>{{ offer.extra_cost_per_kg }}</td>
+                <td>{{ offer.cubic_rate }}</td>
+                <td>{{ offer.min_charge }}</td>
+                <td>
+                    <a href="{{ url_for('offer_bp.edit_offer', offer_id=offer.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    <form action="{{ url_for('offer_bp.delete_offer', offer_id=offer.id) }}" method="post" style="display:inline;">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
