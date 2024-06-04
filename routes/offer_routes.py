@@ -58,30 +58,50 @@ def edit_offer(id):
     offer = Offer.query.get_or_404(id)
     companies = Company.query.all()
     postal_codes = PostalCode.query.all()
+    selected_postal_codes = [opc.postal_code for opc in offer.postal_codes]
+
+    selected_postal_codes_data = [
+        {
+            'id': pc.id,
+            'postal_code': pc.postal_code,
+            'area_name': pc.area_name,
+            'prefecture': pc.prefecture
+        }
+        for pc in selected_postal_codes
+    ]
 
     if request.method == 'POST':
-        form = OfferForm(request.form)
-        if form.validate():
-            offer.company_id = form.company_id.data
-            offer.offer_type = form.offer_type.data
-            offer.min_weight = form.min_weight.data
-            offer.max_weight = form.max_weight.data
-            offer.base_cost = form.base_cost.data
-            offer.extra_cost_per_kg = form.extra_cost_per_kg.data
-            offer.cubic_rate = form.cubic_rate.data
-            offer.min_charge = form.min_charge.data
+        offer.company_id = request.form['company_id']
+        offer.offer_type = request.form['offer_type']
+        offer.min_weight = request.form['min_weight']
+        offer.max_weight = request.form['max_weight']
+        offer.base_cost = request.form['base_cost']
+        offer.extra_cost_per_kg = request.form['extra_cost_per_kg']
+        offer.cubic_rate = request.form['cubic_rate']
+        offer.min_charge = request.form['min_charge']
 
-            selected_postal_codes = request.form.getlist('selected_postal_codes')
-            offer.postal_codes = [OfferPostalCode(offer_id=offer.id, postal_code_id=pc_id) for pc_id in selected_postal_codes]
+        selected_postal_codes = request.form.getlist('selected_postal_codes')
+        offer.postal_codes = [OfferPostalCode(offer_id=offer.id, postal_code_id=pc_id) for pc_id in selected_postal_codes]
 
+        try:
             db.session.commit()
             flash('Offer updated successfully', 'success')
-            return redirect(url_for('offer_bp.view_offers'))
-        else:
-            flash('Error updating offer', 'danger')
+            return redirect(url_for('offer_bp.offers'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating offer: {str(e)}', 'danger')
 
-    selected_postal_codes = [pc.postal_code_id for pc in offer.postal_codes]
-    return render_template('edit_offer.html', offer=offer, companies=companies, postal_codes=postal_codes, selected_postal_codes=selected_postal_codes)
+    postal_codes_data = [
+        {
+            'id': pc.id,
+            'postal_code': pc.postal_code,
+            'area_name': pc.area_name,
+            'prefecture': pc.prefecture
+        }
+        for pc in postal_codes
+    ]
+
+    return render_template('edit_offer.html', offer=offer, companies=companies, postal_codes=postal_codes_data, selected_postal_codes=selected_postal_codes_data)
 
 
 @offer_bp.route('/offers/delete_offer/<int:offer_id>', methods=['POST'])

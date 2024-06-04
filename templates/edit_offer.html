@@ -30,7 +30,7 @@
     </div>
     <div class="form-group">
         <label for="base_cost">Base Cost:</label>
-        <input type="number" step="0.01" class="form-control" id="base_cost" name="base_cost" value="{{ offer.base_cost }}" required>
+        <input type="number" step="0.01" class="form-control" id="base_cost" name="base_cost" value="{{ offer.base_cost }}">
     </div>
     <div class="form-group">
         <label for="extra_cost_per_kg">Extra Cost per kg:</label>
@@ -44,7 +44,7 @@
         <label for="min_charge">Min Charge:</label>
         <input type="number" step="0.01" class="form-control" id="min_charge" name="min_charge" value="{{ offer.min_charge }}">
     </div>
-    
+
     <div class="form-group">
         <label for="postal_codes">Postal Codes:</label>
         <input type="text" class="form-control" id="postal_code_search" placeholder="Search for Postal Codes...">
@@ -53,11 +53,19 @@
         <div id="selected_postal_codes" class="mt-2">
             <h5>Selected Postal Codes</h5>
             <button type="button" class="btn btn-danger" id="clear_selected_postal_codes">Clear All</button>
-            <ul id="selected_postal_codes_list"></ul>
+            <ul id="selected_postal_codes_list">
+                {% for pc in selected_postal_codes %}
+                    <li>
+                        {{ pc.postal_code }} - {{ pc.area_name }}, {{ pc.prefecture }}
+                        <button type="button" class="btn btn-sm btn-danger remove-postal-code" data-id="{{ pc.id }}">Remove</button>
+                        <input type="hidden" name="selected_postal_codes" value="{{ pc.id }}">
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary btn-block">Save Offer</button>
+    <button type="submit" class="btn btn-primary btn-block">Update Offer</button>
 </form>
 {% endblock %}
 
@@ -65,21 +73,61 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const allPostalCodes = {{ postal_codes|tojson }};
-        const selectedPostalCodes = {{ selected_postal_codes|tojson }};
         const postalCodeSearch = document.getElementById('postal_code_search');
         const postalCodeList = document.getElementById('postal_code_list');
         const selectedPostalCodesList = document.getElementById('selected_postal_codes_list');
         const selectAllButton = document.getElementById('select_all_postal_codes');
         const clearAllButton = document.getElementById('clear_selected_postal_codes');
-        
-        let selectedPostalCodeIds = new Set(selectedPostalCodes);
+        let selectedPostalCodes = [];
+
+        postalCodeSearch.addEventListener('input', function() {
+            const searchTerm = postalCodeSearch.value.toLowerCase();
+            postalCodeList.innerHTML = '';
+            const filteredPostalCodes = allPostalCodes.filter(pc => !selectedPostalCodes.includes(pc) && (pc.area_name.toLowerCase().includes(searchTerm) || pc.prefecture.toLowerCase().includes(searchTerm) || pc.postal_code.includes(searchTerm)));
+            filteredPostalCodes.forEach(pc => {
+                const listItem = document.createElement('div');
+                listItem.innerHTML = `<input type="checkbox" value="${pc.id}"> ${pc.postal_code} - ${pc.area_name}, ${pc.prefecture}`;
+                postalCodeList.appendChild(listItem);
+            });
+        });
+
+        postalCodeList.addEventListener('change', function(event) {
+            const checkbox = event.target;
+            if (checkbox.checked) {
+                const postalCodeId = checkbox.value;
+                const postalCode = allPostalCodes.find(pc => pc.id == postalCodeId);
+                selectedPostalCodes.push(postalCode);
+                updateSelectedPostalCodes();
+                updatePostalCodeList();
+            }
+        });
+
+        selectAllButton.addEventListener('click', function() {
+            const checkboxes = postalCodeList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    const postalCodeId = checkbox.value;
+                    const postalCode = allPostalCodes.find(pc => pc.id == postalCodeId);
+                    selectedPostalCodes.push(postalCode);
+                }
+            });
+            updateSelectedPostalCodes();
+            updatePostalCodeList();
+        });
+
+        clearAllButton.addEventListener('click', function() {
+            selectedPostalCodes = [];
+            updateSelectedPostalCodes();
+            postalCodeList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+            updatePostalCodeList();
+        });
 
         function updateSelectedPostalCodes() {
             selectedPostalCodesList.innerHTML = '';
-            selectedPostalCodeIds.forEach(id => {
-                const pc = allPostalCodes.find(pc => pc.id == id);
+            selectedPostalCodes.forEach(pc => {
                 const listItem = document.createElement('li');
-                listItem.innerHTML = `${pc.postal_code} - ${pc.area_name}, ${pc.prefecture} <button type="button" class="btn btn-sm btn-danger" data-id="${pc.id}">Remove</button>`;
+                listItem.innerHTML = `${pc.postal_code} - ${pc.area_name}, ${pc.prefecture} <button type="button" class="btn btn-sm btn-danger remove-postal-code" data-id="${pc.id}">Remove</button>`;
                 selectedPostalCodesList.appendChild(listItem);
 
                 // Ensure selected postal codes are sent in the form submission
@@ -91,60 +139,26 @@
             });
         }
 
+        selectedPostalCodesList.addEventListener('click', function(event) {
+            if (event.target.tagName === 'BUTTON') {
+                const postalCodeId = event.target.dataset.id;
+                selectedPostalCodes = selectedPostalCodes.filter(pc => pc.id != postalCodeId);
+                updateSelectedPostalCodes();
+                postalCodeList.querySelector(`input[value="${postalCodeId}"]`).checked = false;
+                updatePostalCodeList();
+            }
+        });
+
         function updatePostalCodeList() {
             const searchTerm = postalCodeSearch.value.toLowerCase();
             postalCodeList.innerHTML = '';
-            const filteredPostalCodes = allPostalCodes.filter(pc => !selectedPostalCodeIds.has(pc.id) && (pc.area_name.toLowerCase().includes(searchTerm) || pc.prefecture.toLowerCase().includes(searchTerm) || pc.postal_code.includes(searchTerm)));
+            const filteredPostalCodes = allPostalCodes.filter(pc => !selectedPostalCodes.includes(pc) && (pc.area_name.toLowerCase().includes(searchTerm) || pc.prefecture.toLowerCase().includes(searchTerm) || pc.postal_code.includes(searchTerm)));
             filteredPostalCodes.forEach(pc => {
                 const listItem = document.createElement('div');
                 listItem.innerHTML = `<input type="checkbox" value="${pc.id}"> ${pc.postal_code} - ${pc.area_name}, ${pc.prefecture}`;
                 postalCodeList.appendChild(listItem);
             });
         }
-
-        postalCodeSearch.addEventListener('input', updatePostalCodeList);
-
-        postalCodeList.addEventListener('change', function(event) {
-            const checkbox = event.target;
-            if (checkbox.checked) {
-                selectedPostalCodeIds.add(parseInt(checkbox.value));
-                updateSelectedPostalCodes();
-                updatePostalCodeList();
-            }
-        });
-
-        selectAllButton.addEventListener('click', function() {
-            const checkboxes = postalCodeList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                if (!checkbox.checked) {
-                    checkbox.checked = true;
-                    selectedPostalCodeIds.add(parseInt(checkbox.value));
-                }
-            });
-            updateSelectedPostalCodes();
-            updatePostalCodeList();
-        });
-
-        clearAllButton.addEventListener('click', function() {
-            selectedPostalCodeIds.clear();
-            updateSelectedPostalCodes();
-            postalCodeList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
-            updatePostalCodeList();
-        });
-
-        // Initialize the list on page load
-        updatePostalCodeList();
-        updateSelectedPostalCodes();
-
-        selectedPostalCodesList.addEventListener('click', function(event) {
-            if (event.target.tagName === 'BUTTON') {
-                const postalCodeId = event.target.dataset.id;
-                selectedPostalCodeIds.delete(parseInt(postalCodeId));
-                updateSelectedPostalCodes();
-                postalCodeList.querySelector(`input[value="${postalCodeId}"]`).checked = false;
-                updatePostalCodeList();
-            }
-        });
     });
 </script>
 {% endblock %}
