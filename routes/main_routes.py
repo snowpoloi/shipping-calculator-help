@@ -178,3 +178,4 @@ def search_postal_codes():
         results = PostalCode.query.filter(PostalCode.postal_code.like(f'%{query}%')).all()
         return jsonify([{'postal_code': p.postal_code, 'area_name': p.area_name, 'prefecture': p.prefecture} for p in results])
     return jsonify([])
+
